@@ -1,0 +1,72 @@
+# Questo file definisce tutti i nostri servizi
+services:
+  
+  # Servizio 1: L'LLM
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    container_name: ollama_service
+
+  # Servizio 2: Agente E1
+  agent_e1:
+    build: ./agent_e1
+    ports:
+      - "8001:8000" # Porta 8001 del tuo PC
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    container_name: agent_e1_service
+
+  # Servizio 3: Agente E2
+  agent_e2:
+    build: ./agent_e2
+    ports:
+      - "8002:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    container_name: agent_e2_service
+
+  # Servizio 4: Agente Analisi
+  agent_analyze:
+    build: ./agent_analyze
+    ports:
+      - "8003:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    container_name: agent_analyze_service
+
+  # Servizio 5: Agente Finale
+  agent_final:
+    build: ./agent_final
+    ports:
+      - "8004:8000"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    container_name: agent_final_service
+
+  # Servizio 6: L'Orchestratore (Il nostro cervello LangGraph)
+  orchestrator:
+    build: ./orchestrator
+    container_name: orchestrator_client
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - agent_e1
+      - agent_e2
+      - agent_analyze
+      - agent_final
+    # Questo container esegue lo script e termina.
+    # Per debug, puoi aggiungere: tty: true
+
+volumes:
+  ollama_data: # Volume persistente per i modelli LLM
